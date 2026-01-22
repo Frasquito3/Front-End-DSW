@@ -82,41 +82,61 @@ const CoursePreviewCard = React.forwardRef<
       ? `${course.professor.name} ${course.professor.surname}`
       : 'Instructor no disponible';
 
+    // SEO: Generar descripción completa para atributos semánticos
+    const metaDescription = `${displayName}. Instructor: ${instructorName}. ${displayAmountStudents} estudiantes, ${displayAmountUnits} unidades. ${displayIsFree ? 'Curso gratis' : `Precio: ${formatCurrency(displayPriceInCents)}`}`;
+
     return (
-      <Link to={course ? `/courses/${course.id}` : '#'} className="block">
+      <Link to={course ? `/courses/${course.id}` : '#'} className="block" title={metaDescription}>
         <Card
           ref={ref}
           className={cn(
             'group transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm hover:shadow-lg cursor-pointer h-full flex flex-col m-2',
             className
           )}
+          itemScope
+          itemType="https://schema.org/Course"
           {...props}
         >
           <div className="relative overflow-hidden rounded-t-lg">
             <img
               src={displayImage || '/img/noImage.jpg'}
-              alt={`Curso de ${displayName || 'Vista previa del curso'} - ${displayCourseType?.name || 'Categoría'}`}
+              alt={`Curso: ${displayName || 'sin nombre especificado'}. Categoría: ${displayCourseType?.name || 'sin categoría'}. Instructor: ${instructorName}`}
+              title={`${displayName} - Aprende con ${instructorName} en la categoría ${displayCourseType?.name || 'sin especificar'}`}
               loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+              width="400"
+              height="192"
+              itemProp="image"
               className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>
           <div className="flex flex-col flex-grow">
             <CardHeader className="pb-2">
               <div className="flex items-center flex-wrap gap-2 mb-2">
-                <Badge className="bg-blue-500 text-white border-blue-600">
+                <Badge 
+                  className="bg-blue-500 text-white border-blue-600"
+                  itemProp="courseType"
+                >
                   {displayCourseType?.name || 'Sin Categoría'}
                 </Badge>
               </div>
-              <CardTitle className="text-lg font-semibold text-slate-800 line-clamp-2 group-hover:text-blue-600 transition-colors h-14">
+              <CardTitle 
+                className="text-lg font-semibold text-slate-800 line-clamp-2 group-hover:text-blue-600 transition-colors h-14"
+                itemProp="name"
+              >
                 {displayName || 'Nombre del curso'}
               </CardTitle>
-              <CardDescription className="text-sm text-slate-600 min-h-[40px] line-clamp-2">
+              <CardDescription 
+                className="text-sm text-slate-600 min-h-[40px] line-clamp-2"
+                itemProp="description"
+              >
                 {displayDescription ||
                   'La descripción del curso aparecerá aquí...'}
               </CardDescription>
               {course && !hideInstructor && (
                 <div className="text-sm text-slate-500 mt-1 space-y-0.5">
-                  <p>Por {instructorName}</p>
+                  <p>Por <span itemProp="instructor" itemScope itemType="https://schema.org/Person"><span itemProp="name">{instructorName}</span></span></p>
                   <p className="text-xs text-slate-400">
                     {course.professor?.institution?.name || '\u00A0'}
                   </p>
@@ -127,18 +147,18 @@ const CoursePreviewCard = React.forwardRef<
               <div className="space-y-3">
                 {course && (
                   <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
-                    <div className="flex items-center space-x-1">
-                      <Users className="w-3 h-3" />
-                      <span>
+                    <div className="flex items-center space-x-1" aria-label="Cantidad de estudiantes">
+                      <Users className="w-3 h-3" aria-hidden="true" />
+                      <span itemProp="numberOfStudents">
                         {displayAmountStudents}{' '}
                         {(displayAmountStudents ?? 0) === 1
                           ? 'Estudiante'
                           : 'Estudiantes'}
                       </span>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <BookOpen className="w-3 h-3" />
-                      <span>
+                    <div className="flex items-center space-x-1" aria-label="Cantidad de unidades">
+                      <BookOpen className="w-3 h-3" aria-hidden="true" />
+                      <span itemProp="numberOfUnits">
                         {displayAmountUnits}{' '}
                         {(displayAmountUnits ?? 0) === 1
                           ? 'Unidad'
@@ -150,15 +170,16 @@ const CoursePreviewCard = React.forwardRef<
                 <div className="flex items-center justify-between pt-2 border-t">
                   <div className="text-lg font-bold text-slate-800">
                     {displayIsFree ? (
-                      <span className="text-green-600">Gratis</span>
+                      <span className="text-green-600" itemProp="price" content="0">Gratis</span>
                     ) : (
-                      <span>{formatCurrency(displayPriceInCents)}</span>
+                      <span itemProp="price" content={displayPriceInCents.toString()}>{formatCurrency(displayPriceInCents)}</span>
                     )}
                   </div>
                   {!hideButton && (
                     <Button 
                       variant="primary" 
                       size="sm"
+                      aria-label={`Ver más detalles de ${displayName}`}
                       onClick={(e) => {
                         if (onViewMore) {
                           e.preventDefault(); 
