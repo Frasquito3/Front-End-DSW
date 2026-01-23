@@ -8,6 +8,7 @@ import Button from '../../components/ui/Button/Button';
 import Input from '../../components/ui/Input/Input';
 import AuthCard from '../../components/layouts/AuthCard';
 import { isAxiosError } from 'axios';
+import { SEO } from '../../components/common/SEO.tsx';
 
 const RegisterObjectSchema = v.object({
   name: v.pipe(v.string(), v.minLength(1, 'El nombre es requerido.')),
@@ -60,98 +61,104 @@ const RegisterPage = () => {
   };
 
   return (
-    <AuthCard
-      title="Crea tu Cuenta"
-      description="Completa el formulario para unirte a nosotros"
-    >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
+    <>
+      <SEO 
+        title="Crear Cuenta"
+        description="Únete a UpSkill y comienza a aprender sin límites. Regístrate como estudiante o profesor."
+      />
+      <AuthCard
+        title="Crea tu Cuenta"
+        description="Completa el formulario para unirte a nosotros"
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
+            <Input
+              id="name"
+              label="Nombre"
+              type="text"
+              placeholder="Darth"
+              icon={<User className="h-5 w-5" />}
+              autoComplete="given-name"
+              {...formRegister('name')}
+              error={errors.name?.message}
+            />
+            <Input
+              id="surname"
+              label="Apellido"
+              type="text"
+              placeholder="Vader"
+              icon={<User className="h-5 w-5" />}
+              autoComplete="family-name"
+              {...formRegister('surname')}
+              error={errors.surname?.message}
+            />
+          </div>
+
           <Input
-            id="name"
-            label="Nombre"
-            type="text"
-            placeholder="Darth"
-            icon={<User className="h-5 w-5" />}
-            autoComplete="given-name"
-            {...formRegister('name')}
-            error={errors.name?.message}
+            id="mail"
+            label="Correo Electrónico"
+            type="email"
+            placeholder="tu@email.com"
+            icon={<Mail className="h-5 w-5" />}
+            autoComplete="email"
+            {...formRegister('mail')}
+            error={errors.mail?.message}
           />
+
           <Input
-            id="surname"
-            label="Apellido"
-            type="text"
-            placeholder="Vader"
-            icon={<User className="h-5 w-5" />}
-            autoComplete="family-name"
-            {...formRegister('surname')}
-            error={errors.surname?.message}
+            id="password"
+            label="Contraseña"
+            type="password"
+            placeholder="••••••••••"
+            icon={<Lock className="h-5 w-5" />}
+            autoComplete="new-password"
+            {...formRegister('password')}
+            error={errors.password?.message}
           />
-        </div>
 
-        <Input
-          id="mail"
-          label="Correo Electrónico"
-          type="email"
-          placeholder="tu@email.com"
-          icon={<Mail className="h-5 w-5" />}
-          autoComplete="email"
-          {...formRegister('mail')}
-          error={errors.mail?.message}
-        />
+          <Input
+            id="confirmPassword"
+            label="Confirmar Contraseña"
+            type="password"
+            placeholder="••••••••••"
+            icon={<Lock className="h-5 w-5" />}
+            autoComplete="new-password"
+            {...formRegister('confirmPassword')}
+            error={errors.confirmPassword?.message}
+          />
 
-        <Input
-          id="password"
-          label="Contraseña"
-          type="password"
-          placeholder="••••••••••"
-          icon={<Lock className="h-5 w-5" />}
-          autoComplete="new-password"
-          {...formRegister('password')}
-          error={errors.password?.message}
-        />
+          {error && (
+            <p className="text-sm text-red-500 text-center">
+              {isAxiosError(error)
+                ? error.response?.data?.errors || 'Credenciales incorrectas.'
+                : 'Ocurrió un error inesperado.'}
+            </p>
+          )}
 
-        <Input
-          id="confirmPassword"
-          label="Confirmar Contraseña"
-          type="password"
-          placeholder="••••••••••"
-          icon={<Lock className="h-5 w-5" />}
-          autoComplete="new-password"
-          {...formRegister('confirmPassword')}
-          error={errors.confirmPassword?.message}
-        />
+          <div className="pt-2">
+            <Button
+              type="submit"
+              isLoading={isPending}
+              variant="primary"
+              size="lg"
+              fullWidth
+            >
+              Registrarse
+            </Button>
+          </div>
 
-        {error && (
-          <p className="text-sm text-red-500 text-center">
-            {isAxiosError(error)
-              ? error.response?.data?.errors || 'Credenciales incorrectas.'
-              : 'Ocurrió un error inesperado.'}
-          </p>
-        )}
-
-        <div className="pt-2">
-          <Button
-            type="submit"
-            isLoading={isPending}
-            variant="primary"
-            size="lg"
-            fullWidth
-          >
-            Registrarse
-          </Button>
-        </div>
-
-        <div className="text-center text-sm text-slate-600">
-          ¿Ya tienes una cuenta?{' '}
-          <Link
-            to="/login"
-            className="font-medium text-blue-600 hover:underline"
-          >
-            Inicia sesión
-          </Link>
-        </div>
-      </form>
-    </AuthCard>
+          <div className="text-center text-sm text-slate-600">
+            ¿Ya tienes una cuenta?{' '}
+            <Link
+              to="/login"
+              className="font-medium text-blue-600 hover:underline"
+            >
+              Inicia sesión
+            </Link>
+          </div>
+        </form>
+      </AuthCard>
+    </>
   );
 };
 

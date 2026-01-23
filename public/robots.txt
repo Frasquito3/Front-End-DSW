@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /professor/dashboard/
+Disallow: /my-learning/
+Disallow: /profile/
 
 Sitemap: https://up-skill.app/sitemap.xml

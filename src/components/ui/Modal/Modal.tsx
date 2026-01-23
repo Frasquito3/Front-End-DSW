@@ -51,14 +51,12 @@ export default function Modal({ isOpen, onClose, title, children, size = 'lg' }:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
-
-      {/* Modal */}
       <div
         ref={modalRef}
         className={`relative bg-white rounded-xl shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col`}
@@ -66,7 +64,6 @@ export default function Modal({ isOpen, onClose, title, children, size = 'lg' }:
         aria-modal="true"
         aria-labelledby="modal-title"
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-200">
           <h2 id="modal-title" className="text-xl font-semibold text-slate-800">
             {title}
@@ -80,7 +77,6 @@ export default function Modal({ isOpen, onClose, title, children, size = 'lg' }:
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {children}
         </div>

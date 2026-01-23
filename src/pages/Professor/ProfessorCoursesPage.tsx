@@ -106,6 +106,7 @@ const ProfessorCoursesPage = () => {
                   e.preventDefault();
                   handleNavigateToEdit(course.id);
                 }}
+                aria-label="Editar curso"
               >
                 <Edit className="w-4 h-4" />
               </Button>

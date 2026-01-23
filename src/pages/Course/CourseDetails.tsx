@@ -13,6 +13,7 @@ import { formatCurrency } from '../../lib/currency';
 import { AxiosError } from 'axios';
 import { toast } from 'react-hot-toast';
 import { Professor } from '../../models/Professor';
+import { SEO } from '../../components/common/SEO';
 
 function CourseDetails() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -148,6 +149,31 @@ function CourseDetails() {
   console.log(course);
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4">
+      <SEO 
+        title={course.name}
+        description={course.description || `Curso completo de ${course.name} en UpSkill.`}
+        ogImage={course.imageUrl || '/img/og-default.png'}
+        ogType="article"
+        keywords={`curso ${course.name}, aprender ${course.name}, curso online, certificación`}
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "Course",
+          "name": course.name,
+          "description": course.description,
+          "provider": {
+            "@type": "Organization",
+            "name": "UpSkill",
+            "sameAs": "https://up-skill.app"
+          },
+          "image": course.imageUrl,
+          "offers": {
+            "@type": "Offer",
+            "category": course.isFree ? "Free" : "Paid",
+            "price": course.priceInCents ? course.priceInCents / 100 : 0,
+            "priceCurrency": "ARS"
+          }
+        }}
+      />
       <div className="container mx-auto max-w-7xl pt-24 pb-8">
         <div className="flex items-center space-x-2 text-sm text-slate-600 mb-6">
           <Link to="/courses" className="hover:text-blue-600">

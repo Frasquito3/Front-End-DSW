@@ -3,7 +3,10 @@ import { BookOpen, Mail, Facebook, X, Instagram, Youtube } from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="bg-slate-800 text-white">
+    <footer className="bg-slate-800 text-white" itemScope itemType="http://schema.org/Organization">
+      <meta itemProp="name" content="UpSkill" />
+      <meta itemProp="url" content="https://up-skill.app" />
+      <meta itemProp="logo" content="https://up-skill.app/favicon.svg" />
       <div className="container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-4 text-center md:text-left">
@@ -66,8 +69,9 @@ export function Footer() {
               <a
                 href="mailto:contacto.upskill@gmail.com"
                 className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors"
+                itemProp="email"
               >
-                <Mail className="w-4 h-4" />
+                <Mail className="w-4 h-4" aria-hidden="true" />
                 <span>contacto.upskill@gmail.com</span>
               </a>
             </div>
@@ -79,8 +83,8 @@ export function Footer() {
               <a
                 href="https://web.facebook.com/profile.php?id=61585158078001"
                 target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
+                rel="noopener noreferrer nofollow"
+                aria-label="Visítanos en Facebook"
                 className="w-9 h-9 bg-slate-700 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors"
               >
                 <Facebook className="w-5 h-5" />
@@ -88,8 +92,8 @@ export function Footer() {
               <a
                 href="https://x.com/USkillteam57089"
                 target="_blank"
-                rel="noopener noreferrer"
-                aria-label="X"
+                rel="noopener noreferrer nofollow"
+                aria-label=" Visítanos en X"
                 className="w-9 h-9 bg-slate-700 rounded-lg flex items-center justify-center hover:bg-black transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -97,8 +101,8 @@ export function Footer() {
               <a
                 href="https://www.instagram.com/upskill.ok/"
                 target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
+                rel="noopener noreferrer nofollow"
+                aria-label="Visítanos en Instagram"
                 className="w-9 h-9 bg-slate-700 rounded-lg flex items-center justify-center hover:bg-pink-600 transition-colors"
               >
                 <Instagram className="w-5 h-5" />
@@ -106,8 +110,8 @@ export function Footer() {
               <a
                 href="https://www.youtube.com/channel/UCE4d4pz64jJRghnEEdqiDYA"
                 target="_blank"
-                rel="noopener noreferrer"
-                aria-label="YouTube"
+                rel="noopener noreferrer nofollow"
+                aria-label="Visítanos en YouTube"
                 className="w-9 h-9 bg-slate-700 rounded-lg flex items-center justify-center hover:bg-red-600 transition-colors"
               >
                 <Youtube className="w-5 h-5" />

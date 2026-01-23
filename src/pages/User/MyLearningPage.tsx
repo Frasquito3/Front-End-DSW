@@ -6,6 +6,7 @@ import { Card, CardContent } from '../../components/ui/Card/Card';
 import Button from '../../components/ui/Button/Button';
 import Badge from '../../components/ui/Badge/Badge';
 import StatusBadge from '../../components/ui/StatusBadge/StatusBadge';
+import { SEO } from '../../components/common/SEO.tsx';
 
 /**
  * MyLearningPage Component
@@ -111,6 +112,7 @@ export default function MyLearningPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 pt-16">
+      <SEO title="Mis Aprendizajes" description="Accede a tus cursos inscritos y continúa tu progreso." />
       <div className="bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm w-full">
         <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

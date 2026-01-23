@@ -78,6 +78,7 @@ export default function MaterialsList({ materials }: MaterialsListProps) {
                     variant="outline"
                     onClick={() => setPreviewMaterial(material)}
                     title="Vista previa"
+                    aria-label="Vista previa del material"
                   >
                     <Eye className="w-4 h-4" />
                   </Button>
@@ -86,6 +87,7 @@ export default function MaterialsList({ materials }: MaterialsListProps) {
                     variant="outline"
                     onClick={() => window.open(material.url, '_blank', 'noopener,noreferrer')}
                     title="Abrir en nueva pestaña"
+                    aria-label="Abrir material en nueva pestaña"
                   >
                     <ExternalLink className="w-4 h-4" />
                   </Button>
@@ -100,6 +102,7 @@ export default function MaterialsList({ materials }: MaterialsListProps) {
                       document.body.removeChild(link);
                     }}
                     title="Descargar"
+                    aria-label="Descargar material"
                   >
                     <Download className="w-4 h-4" />
                   </Button>

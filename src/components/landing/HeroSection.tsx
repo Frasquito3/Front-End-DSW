@@ -49,9 +49,17 @@ export default function HeroSection() {
             </div>
           </div>
 
-          <Suspense fallback={<div className="relative w-full h-[280px] sm:h-[350px] lg:h-[500px]" />}>
-            <RobotModel />
-          </Suspense>
+          <div className="relative w-full h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center" style={{ contain: 'content' }}>
+            <Suspense fallback={
+              <div 
+                className="w-full h-full bg-slate-100 rounded-3xl flex items-center justify-center"
+                aria-hidden="true"
+              >
+              </div>
+            }>
+              <RobotModel />
+            </Suspense>
+          </div>
         </div>
       </div>
     </section>

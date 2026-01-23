@@ -24,7 +24,7 @@ const DocumentViewer = ({ url, onClose }: DocumentViewerProps) => {
             size="sm"
             onClick={() => onClose()}
             className="absolute top-3 right-3 h-8 w-8 p-0"
-            aria-label="Cerrar visor"
+            aria-label="Cerrar visor de documentos"
           >
             <X className="w-4 h-4" />
           </Button>

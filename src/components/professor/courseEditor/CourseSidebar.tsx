@@ -38,7 +38,7 @@ export default function CourseSidebar({
       <CardContent className="pt-0">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-medium text-slate-800">Unidades</h3>
-          <Button size="sm" variant="ghost" onClick={onCreateUnit}>
+          <Button size="sm" variant="ghost" onClick={onCreateUnit} aria-label="Crear nueva unidad">
             <Plus className="w-4 h-4" />
           </Button>
         </div>

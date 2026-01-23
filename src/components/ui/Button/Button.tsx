@@ -32,6 +32,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
    * @default false
    */
   fullWidth?: boolean;
+  /**
+   * Accessible label for buttons that contain only icons.
+   * Essential for screen readers when no text is visible.
+   */
+  'aria-label'?: string;
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -57,7 +62,7 @@ const sizeClasses: Record<ButtonSize, string> = {
  * @param {ButtonProps} props - The properties to configure the button.
  * @returns {JSX.Element} The rendered button component.
  * @example
- * <Button variant="primary" size="lg" onClick={() => alert('Clicked!')}>
+ * <Button variant="primary" size="lg" onClick={() => alert('Clicked!')} aria-label="Submit Form">
  *   Click Me
  * </Button>
  */
@@ -80,10 +85,11 @@ const Button = ({
         className
       )}
       disabled={isLoading || props.disabled}
+      aria-busy={isLoading}
       {...props}
     >
       {isLoading ? (
-        <span className="animate-spin h-5 w-5 border-2 border-transparent border-t-current rounded-full"></span>
+        <span className="animate-spin h-5 w-5 border-2 border-transparent border-t-current rounded-full" aria-hidden="true"></span>
       ) : (
         children
       )}

@@ -158,6 +158,7 @@ export default function UnitContent({
                               className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600"
                               onClick={() => onEditQuestion(question)}
                               title="Editar pregunta"
+                              aria-label="Editar pregunta"
                             >
                               <Edit2 className="w-4 h-4" />
                             </Button>
@@ -169,6 +170,7 @@ export default function UnitContent({
                                 question.id && onDeleteQuestion(question.id)
                               }
                               title="Eliminar pregunta"
+                              aria-label="Eliminar pregunta"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -180,6 +182,7 @@ export default function UnitContent({
                             className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600"
                             onClick={() => onEditQuestion(question)}
                             title="Ver pregunta"
+                            aria-label="Ver detalles de pregunta"
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -222,6 +225,7 @@ export default function UnitContent({
                         className="h-6 w-6 p-0 text-slate-500 hover:text-blue-600"
                         onClick={() => setPreviewMaterial(material)}
                         title="Vista previa"
+                        aria-label="Vista previa del material"
                       >
                         <Eye className="w-3 h-3" />
                       </Button>
@@ -231,6 +235,7 @@ export default function UnitContent({
                         className="h-6 w-6 p-0 text-slate-500 hover:text-red-600"
                         onClick={() => onDeleteMaterial(index)}
                         title="Eliminar"
+                        aria-label="Eliminar material"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>

@@ -197,16 +197,18 @@ export default function CourseTypesPage() {
                       variant="outline"
                       size="md"
                       onClick={() => openModalForEdit(type)}
+                      aria-label={`Editar tipo de curso ${type.name}`}
                     >
-                      <Edit className="w-4 h-4 mr-1" /> Editar
+                      <Edit className="w-4 h-4 mr-1" aria-hidden="true" /> Editar
                     </Button>
                     <Button
                       variant="destructive"
                       size="md"
                       onClick={() => handleDelete(type.id)}
                       disabled={deleteMutation.isPending}
+                      aria-label={`Eliminar tipo de curso ${type.name}`}
                     >
-                      <Trash2 className="w-4 h-4 mr-1" /> Eliminar
+                      <Trash2 className="w-4 h-4 mr-1" aria-hidden="true" /> Eliminar
                     </Button>
                   </div>
                 </div>

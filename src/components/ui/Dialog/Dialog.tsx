@@ -51,7 +51,7 @@ const Dialog = ({ open, onOpenChange, children }: DialogProps) => {
           size="sm"
           onClick={() => onOpenChange(false)}
           className="absolute top-3 right-3 h-8 w-8 p-0"
-          aria-label="Cerrar modal"
+          aria-label="Cerrar diálogo"
         >
           <X className="w-4 h-4" />
         </Button>

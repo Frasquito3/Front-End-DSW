@@ -81,25 +81,35 @@ export function NavBar() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-blue-100 shadow-sm">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" onClick={() => handleLinkClick('/')} className="flex items-center space-x-2">
+        
+        <Link 
+          to="/" 
+          onClick={() => handleLinkClick('/')} 
+          className="flex items-center space-x-2"
+          rel="home"
+          aria-label="Ir a la página de inicio de UpSkill"
+        >
           <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-green-400 rounded-lg flex items-center justify-center">
-            <BookOpen className="w-5 h-5 text-white" />
+            <BookOpen className="w-5 h-5 text-white" aria-hidden="true" />
           </div>
           <span className="text-xl font-poppins font-bold text-slate-800">UpSkill</span>
         </Link>
 
-        <div className="hidden md:flex items-center space-x-2 md:space-x-4">
+        <nav className="hidden md:flex items-center space-x-2 md:space-x-4" aria-label="Menú principal">
           <Link
             to="/courses"
             className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center transition-colors ${
               location.pathname === '/courses' ? activeLinkClasses : inactiveLinkClasses
             }`}
           >
-            <BookOpen className="w-4 h-4" /> <span className="xl:inline ml-2">Cursos</span>
+            <BookOpen className="w-4 h-4" aria-hidden="true" /> <span className="xl:inline ml-2">Cursos</span>
           </Link>
           
           {isLoading ? (
-             <div className="flex items-center space-x-2"><div className="h-8 w-20 bg-slate-200 rounded-lg animate-pulse"></div><div className="h-8 w-24 bg-slate-200 rounded-lg animate-pulse"></div></div>
+             <div className="flex items-center space-x-2" aria-hidden="true">
+               <div className="h-8 w-20 bg-slate-200 rounded-lg animate-pulse"></div>
+               <div className="h-8 w-24 bg-slate-200 rounded-lg animate-pulse"></div>
+             </div>
           ) : isAuthenticated ? (
             <>
               {(user?.role === 'student' || user?.role === 'professor') && (
@@ -109,13 +119,13 @@ export function NavBar() {
                     location.pathname === '/my-learning' ? activeLinkClasses : inactiveLinkClasses
                   }`}
                 >
-                  <GraduationCap className="w-4 h-4" />
+                  <GraduationCap className="w-4 h-4" aria-hidden="true" />
                   <span className="xl:inline ml-2">Mis Aprendizajes</span>
                 </Link>
               )}
               {user?.role === 'student' && (
                 <Button variant="outline" size="sm" className="border-green-200 text-green-700 hover:bg-green-50" onClick={handleApplyClick}>
-                  <GraduationCap className="w-4 h-4 mr-2" />
+                  <GraduationCap className="w-4 h-4 mr-2" aria-hidden="true" />
                   <span>Quiero ser profesor</span>
                 </Button>
               )}
@@ -126,12 +136,12 @@ export function NavBar() {
               </div>
 
               <div className="flex items-center ml-4">
-                <Button variant="ghost" size="sm" className="relative p-2">
-                  <Bell className="w-5 h-5" />
+                <Button variant="ghost" size="sm" className="relative p-2" aria-label="Ver notificaciones">
+                  <Bell className="w-5 h-5" aria-hidden="true" />
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 ml-2">
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 ml-2" aria-label="Menú de usuario">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={user?.profile_picture} alt={user?.name} />
                         <AvatarFallback className="bg-gradient-to-br from-blue-400 to-green-400 text-white font-bold">
@@ -147,9 +157,9 @@ export function NavBar() {
                       {user && <RoleBadge role={user.role} />}
                     </div>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate('/profile')}><UserIcon className="mr-2 h-4 w-4" /><span>Mi Perfil</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/profile')}><UserIcon className="mr-2 h-4 w-4" aria-hidden="true" /><span>Mi Perfil</span></DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600"><LogOut className="mr-2 h-4 w-4" /><span>Cerrar sesión</span></DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600"><LogOut className="mr-2 h-4 w-4" aria-hidden="true" /><span>Cerrar sesión</span></DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -157,38 +167,45 @@ export function NavBar() {
           ) : (
             <>
               <Button variant="outline" size="sm" className="border-green-200 text-green-700 hover:bg-green-50" onClick={handleApplyClick}>
-                <GraduationCap className="w-4 h-4 mr-2" />
+                <GraduationCap className="w-4 h-4 mr-2" aria-hidden="true" />
                 <span>Quiero ser profesor</span>
               </Button>
               <Link to="/login" onClick={() => handleLinkClick('/login')} className="flex items-center text-slate-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-medium text-sm">
-                <LogIn className="w-4 h-4 mr-2" /> Login
+                <LogIn className="w-4 h-4 mr-2" aria-hidden="true" /> Login
               </Link>
               <Link to="/register" onClick={() => handleLinkClick('/register')} className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm">
-                <UserPlus className="w-4 h-4 mr-2" /> Register
+                <UserPlus className="w-4 h-4 mr-2" aria-hidden="true" /> Register
               </Link>
             </>
           )}
-        </div>
+        </nav>
 
         <div className="md:hidden flex items-center">
-          <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+            className="p-2"
+            aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={isMobileMenuOpen}
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" aria-hidden="true" /> : <Menu className="w-6 h-6" aria-hidden="true" />}
           </Button>
         </div>
       </div>
 
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed left-0 right-0 top-16 bg-white border-t border-blue-100 w-screen max-h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden shadow-lg animate-fadeIn">
+        <nav className="md:hidden fixed left-0 right-0 top-16 bg-white border-t border-blue-100 w-screen max-h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden shadow-lg animate-fadeIn" aria-label="Menú móvil">
           <div className="px-4 pt-4 pb-6 space-y-2 w-full box-border">
             {isLoading ? ( <div className="text-center p-4">Cargando...</div> ) : isAuthenticated ? (
             <>
               <MobileNavLink to="/courses" onClick={() => setIsMobileMenuOpen(false)}>
-                  <BookOpen className="w-5 h-5 mr-3 text-slate-500" /> Cursos
+                  <BookOpen className="w-5 h-5 mr-3 text-slate-500" aria-hidden="true" /> Cursos
               </MobileNavLink>
               
               {(user?.role === 'student' || user?.role === 'professor') && (
                 <MobileNavLink to="/my-learning" onClick={() => setIsMobileMenuOpen(false)}>
-                    <GraduationCap className="w-5 h-5 mr-3 text-slate-500" /> Mis Aprendizajes
+                    <GraduationCap className="w-5 h-5 mr-3 text-slate-500" aria-hidden="true" /> Mis Aprendizajes
                 </MobileNavLink>
               )}
               
@@ -213,16 +230,16 @@ export function NavBar() {
               
               <div className="pt-4 border-t mt-4 space-y-2">
                   <MobileNavLink to="/profile" onClick={() => setIsMobileMenuOpen(false)}>
-                      <UserIcon className="w-5 h-5 mr-3 text-slate-500" /> Mi Perfil
+                      <UserIcon className="w-5 h-5 mr-3 text-slate-500" aria-hidden="true" /> Mi Perfil
                   </MobileNavLink>
                   {user?.role === 'student' && (
                     <Button variant="outline" size="md" fullWidth className="border-green-300 text-green-700 hover:bg-green-50" onClick={handleApplyClick}>
-                        <GraduationCap className="w-4 h-4 mr-2" />
+                        <GraduationCap className="w-4 h-4 mr-2" aria-hidden="true" />
                         Quiero ser profesor
                     </Button>
                   )}
                   <Button variant="outline" size="md" fullWidth className="text-red-600 border-red-300 hover:bg-red-50" onClick={handleLogout}>
-                    <LogOut className="w-4 h-4 mr-2" />
+                    <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
                     Cerrar Sesión
                   </Button>
               </div>
@@ -230,28 +247,28 @@ export function NavBar() {
           ) : (
             <>
               <MobileNavLink to="/courses" onClick={() => setIsMobileMenuOpen(false)}>
-                  <BookOpen className="w-5 h-5 mr-3 text-slate-500" /> Cursos
+                  <BookOpen className="w-5 h-5 mr-3 text-slate-500" aria-hidden="true" /> Cursos
               </MobileNavLink>
               <div className="pt-4 border-t mt-4 space-y-3">
                 <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="block">
                     <Button variant="outline" size="md" fullWidth>
-                        <LogIn className="w-4 h-4 mr-2" /> Iniciar Sesión
+                        <LogIn className="w-4 h-4 mr-2" aria-hidden="true" /> Iniciar Sesión
                     </Button>
                 </Link>
                 <Link to="/register" onClick={() => setIsMobileMenuOpen(false)} className="block">
                     <Button size="md" fullWidth>
-                        <UserPlus className="w-4 h-4 mr-2" /> Registrarse
+                        <UserPlus className="w-4 h-4 mr-2" aria-hidden="true" /> Registrarse
                     </Button>
                 </Link>
                  <Button variant="outline" size="md" fullWidth className="border-green-300 text-green-700 hover:bg-green-50" onClick={handleApplyClick}>
-                    <GraduationCap className="w-4 h-4 mr-2" />
+                    <GraduationCap className="w-4 h-4 mr-2" aria-hidden="true" />
                     Quiero ser profesor
                 </Button>
               </div>
             </>
           )}
           </div>
-        </div>
+        </nav>
       )}
     </header>
   );

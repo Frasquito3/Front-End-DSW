@@ -43,6 +43,7 @@ import { isAxiosError } from 'axios';
 import RoleBadge from '../../components/ui/RoleBadge/RoleBadge';
 import ProfessorProfileTab from './ProfessorProfileTab';
 import StudentAppealsHistory from '../../components/student/StudentAppealsHistory';
+import { SEO } from '../../components/common/SEO.tsx';
 
 const ProfileSchema = v.object({
   name: v.pipe(v.string(), v.minLength(1, 'El nombre es requerido.')),
@@ -148,6 +149,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4">
+      <SEO title="Mi Perfil" description="Gestiona tu información personal en UpSkill." />
       <div className="container mx-auto max-w-7xl pt-24 pb-8">
         <div className="mb-8">
           <h1 className="text-3xl lg:text-4xl font-bold text-slate-800 mb-2">

@@ -14,6 +14,7 @@ import Button from '../../components/ui/Button/Button.tsx';
 import { Search, LayoutGrid, List } from 'lucide-react';
 import { useDebounce } from '../../hooks/useDebounce.ts';
 import { useProfessors } from '../../hooks/useProfessor.ts';
+import { SEO } from '../../components/common/SEO.tsx';
 
 const CourseListPage = () => {
   const navigate = useNavigate();
@@ -89,6 +90,11 @@ const CourseListPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4">
+      <SEO 
+        title="Explora Nuestros Cursos Online"
+        description="Navega por nuestro catálogo de cursos en programación, diseño, marketing y más. Filtra por categoría, precio o profesor y comienza a aprender hoy."
+        keywords="catálogo de cursos, cursos programación, cursos diseño, aprender online, buscar cursos"
+      />
       <div className="container mx-auto max-w-7xl pt-24 pb-8">
         <div className="mb-8 text-center sm:text-left">
           <h1 className="text-3xl lg:text-4xl font-bold text-slate-800 mb-2">

@@ -105,7 +105,6 @@ export default function QuestionForm({
   return (
     <Card className="p-6 bg-gradient-to-br from-blue-50 to-white border-2 border-blue-100">
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Unit Selection */}
         {showUnitSelector && availableUnits.length > 0 && (
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -136,7 +135,6 @@ export default function QuestionForm({
           </div>
         )}
 
-        {/* Question Text */}
         <div>
           <TextArea
             label="Pregunta"
@@ -152,7 +150,6 @@ export default function QuestionForm({
           />
         </div>
 
-        {/* Options */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
             Opciones de Respuesta
@@ -172,7 +169,6 @@ export default function QuestionForm({
                       : 'bg-white border-gray-200 hover:border-blue-300'
                   }`}
                 >
-                  {/* Radio Button */}
                   <div className="flex items-center">
                     <input
                       type="radio"
@@ -187,7 +183,6 @@ export default function QuestionForm({
                     />
                   </div>
 
-                  {/* Option Letter */}
                   <div
                     className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                       isCorrect
@@ -198,7 +193,6 @@ export default function QuestionForm({
                     {String.fromCharCode(65 + index)}
                   </div>
 
-                  {/* Option Input */}
                   <Input
                     value={option}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -210,20 +204,19 @@ export default function QuestionForm({
                     className="flex-1"
                   />
 
-                  {/* Correct Indicator */}
                   {isCorrect && (
                     <div className="flex-shrink-0 text-green-600">
                       <Check className="w-5 h-5" />
                     </div>
                   )}
 
-                  {/* Delete Button */}
                   {!readonly && formData.options.length > 2 && (
                     <button
                       type="button"
                       onClick={() => removeOption(index)}
                       className="flex-shrink-0 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Eliminar opción"
+                      aria-label="Eliminar opción de respuesta"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -233,7 +226,6 @@ export default function QuestionForm({
             })}
           </div>
 
-          {/* Add Option Button */}
           {!readonly && (
             <Button
               type="button"
@@ -248,7 +240,6 @@ export default function QuestionForm({
           )}
         </div>
 
-        {/* Actions */}
         {!readonly && (
           <div className="flex gap-3 pt-4 border-t">
             <Button

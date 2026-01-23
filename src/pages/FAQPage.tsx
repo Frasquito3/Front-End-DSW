@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent } from '../components/ui/Card/Card';
 import { SEO } from '../components/common/SEO';
-import { Helmet } from 'react-helmet-async';
 
 const faqs = [
   {
@@ -63,12 +62,8 @@ export default function FAQPage() {
         title="Preguntas Frecuentes - Ayuda y Soporte"
         description="Encuentra respuestas a las preguntas más frecuentes sobre registro, cursos, inscripciones, métodos de pago y cómo convertirte en profesor en UpSkill."
         keywords="preguntas frecuentes, faq, ayuda, soporte, cursos online, inscripción, métodos de pago"
+        schema={faqSchema}
       />
-      <Helmet>
-        <script type="application/ld+json">
-          {JSON.stringify(faqSchema)}
-        </script>
-      </Helmet>
       <div className="container mx-auto max-w-7xl pt-24 pb-12">
         <h1 className="text-4xl font-bold text-slate-800 mb-4 text-center">
           Preguntas Frecuentes

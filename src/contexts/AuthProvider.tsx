@@ -53,6 +53,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+      
+      if (!token) {
+         setIsLoading(false);
+         return;
+      }
 
       const trySilentRefresh = async () => {
         try {
@@ -77,18 +82,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           await fetchProfileAndSetUser();
         } catch {
-          console.warn("Token local inválido o expirado. Intentando renovar sesión...");
-          
           const success = await trySilentRefresh();
           
           if (!success) {
-            console.error("No se pudo restaurar la sesión.");
             localStorage.removeItem(TOKEN_STORAGE_KEY);
             setUser(null);
           }
         }
-      } else {
-        await trySilentRefresh();
       }
       
       setIsLoading(false);

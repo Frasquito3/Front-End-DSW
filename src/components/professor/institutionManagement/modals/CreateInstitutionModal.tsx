@@ -156,14 +156,14 @@ export default function CreateInstitutionModal({
           <p className="text-xs text-slate-500 mb-2">Agrega nombres o siglas alternativas (ej: "UTN", "Tecnológica Nacional")</p>
           <div className="flex gap-2">
             <Input value={currentAlias} onChange={(e) => setCurrentAlias(e.target.value)} placeholder="Agregar alias..." onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAlias())} disabled={isPending || aliases.length >= 10} />
-            <Button type="button" onClick={handleAddAlias} disabled={!currentAlias.trim() || aliases.length >= 10 || isPending} variant="outline"><Plus className="w-4 h-4" /></Button>
+            <Button type="button" onClick={handleAddAlias} disabled={!currentAlias.trim() || aliases.length >= 10 || isPending} variant="outline" aria-label="Agregar alias"><Plus className="w-4 h-4" /></Button>
           </div>
           {aliases.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {aliases.map((alias, index) => (
                 <div key={index} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm border border-blue-200">
                   <span>{alias}</span>
-                  <button type="button" onClick={() => handleRemoveAlias(index)} className="hover:bg-blue-100 rounded-full p-0.5" disabled={isPending}><X className="w-3 h-3" /></button>
+                  <button type="button" onClick={() => handleRemoveAlias(index)} className="hover:bg-blue-100 rounded-full p-0.5" disabled={isPending} aria-label="Eliminar alias"><X className="w-3 h-3" /></button>
                 </div>
               ))}
             </div>

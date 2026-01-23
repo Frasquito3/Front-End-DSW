@@ -250,6 +250,7 @@ function AssessmentCard({
           size="sm"
           onClick={onViewAttempts}
           className="flex-1 flex items-center justify-center gap-2"
+          aria-label="Ver intentos de la evaluación"
         >
           <BarChart3 className="w-4 h-4" />
           Ver Intentos
@@ -260,6 +261,7 @@ function AssessmentCard({
             size="sm"
             onClick={onEdit}
             className="flex-1 flex items-center justify-center gap-2"
+            aria-label="Editar evaluación"
           >
             <Edit className="w-4 h-4" />
             <span className="sm:hidden">Editar</span>
@@ -269,6 +271,7 @@ function AssessmentCard({
             size="sm"
             onClick={onDelete}
             className="flex-1 flex items-center justify-center gap-2 text-red-600 hover:text-red-700 hover:border-red-300"
+            aria-label="Eliminar evaluación"
           >
             <Trash2 className="w-4 h-4" />
             <span className="sm:hidden">Borrar</span>
