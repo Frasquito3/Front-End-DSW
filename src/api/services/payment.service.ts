@@ -12,16 +12,13 @@ interface PreferenceResponse {
 }
 
 const createPreference = async (courseId: string): Promise<PreferenceResponse> => {
-  console.log('🔵 Creating payment preference for course:', courseId);
   const payload = { courseId };
-  console.log('📤 Payload being sent:', payload);
   
   const response = await apiClient.post<ApiResponse<PreferenceResponse>>(
     '/payments/create-preference',
     payload
   );
   
-  console.log('✅ Preference response:', response.data);
   return response.data.data;
 };
 

@@ -20,11 +20,6 @@ const create = async (
       unitNumber: unitNumber,
     };
 
-    console.log('Creating question:', {
-      courseId,
-      unitNumber,
-      data: questionData,
-    });
     const response = await apiClient.post<ApiResponse<Question>>(
       `/courses/${courseId}/units/${unitNumber}/questions`,
       questionData,
@@ -34,7 +29,6 @@ const create = async (
         },
       }
     );
-    console.log('Question created:', response.data);
     return response.data.data;
   } catch (error) {
     console.error('Error creating question:', error);
@@ -48,11 +42,9 @@ const getByUnit = async (
   unitNumber: number
 ): Promise<Question[]> => {
   try {
-    console.log('Fetching questions for:', { courseId, unitNumber });
     const response = await apiClient.get<ApiResponse<Question[]>>(
       `/courses/${courseId}/units/${unitNumber}/questions`
     );
-    console.log('Questions response:', response.data);
     return response.data.data;
   } catch (error) {
     console.error('Error fetching questions:', error);
@@ -76,13 +68,6 @@ const update = async (
       payload: data.payload,
     };
 
-    console.log('Updating question:', {
-      courseId,
-      unitNumber,
-      questionId,
-      data,
-      payload,
-    });
     const response = await apiClient.patch<ApiResponse<Question>>(
       `/courses/${courseId}/units/${unitNumber}/questions/${questionId}`,
       payload,
@@ -92,7 +77,6 @@ const update = async (
         },
       }
     );
-    console.log('Question updated:', response.data);
     return response.data.data;
   } catch (error) {
     console.error('Error updating question:', error);
@@ -150,7 +134,6 @@ const validateAnswer = async (
   answer: number | string
 ): Promise<{ isCorrect: boolean }> => {
   try {
-    console.log('Validating answer:', { courseId, questionId, answer });
     const response = await apiClient.post<ApiResponse<{ isCorrect: boolean }>>(
       `/courses/${courseId}/questions/${questionId}/validate`,
       { answer },
@@ -160,7 +143,6 @@ const validateAnswer = async (
         },
       }
     );
-    console.log('Validation result:', response.data.data);
     return response.data.data;
   } catch (error) {
     console.error('Error validating answer:', error);

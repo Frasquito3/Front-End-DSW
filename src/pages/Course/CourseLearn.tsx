@@ -42,7 +42,6 @@ export default function CourseLearn() {
   useEffect(() => {
     if (isErrorEnrollment && enrollmentError?.response?.status === 404) {
       navigate(`/courses/${courseId}`);
-      console.log('No enrollment found, redirecting to course details.');
     }
 
     if (courseUnits.length > 0 && !currentUnit) {

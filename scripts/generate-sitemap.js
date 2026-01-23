@@ -37,7 +37,6 @@ ${urls}
 
   const sitemapPath = path.join(__dirname, '../public/sitemap.xml');
   fs.writeFileSync(sitemapPath, sitemap.trim());
-  console.log('✓ Sitemap generated successfully at public/sitemap.xml');
 };
 
 generateSitemap();

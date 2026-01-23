@@ -37,8 +37,6 @@ const getTrendingCourses = async (): Promise<Course[]> => {
 
 const create = async (payload: FormData): Promise<Course> => {
 
-  console.log(payload.get('image'));
-
   const response = await apiClient.post<ApiResponse<Course>>(
     '/courses',
     payload,
@@ -93,7 +91,6 @@ const quickSave = async (
   courseId: string,
   data: QuickSaveRequest
 ): Promise<void> => {
-  console.log('Quick save request:', { courseId, data });
   await apiClient.patch(`/courses/${courseId}/quick-save`, data);
 };
 

@@ -146,7 +146,6 @@ function CourseDetails() {
     return <div className="text-center py-20">Curso no encontrado.</div>;
   }
 
-  console.log(course);
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4">
       <SEO 
