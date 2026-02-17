@@ -30,7 +30,7 @@
     "@hookform/resolvers": "^5.2.1",
     "@tanstack/react-query": "^5.85.6",
     "@tanstack/react-query-devtools": "^5.85.6",
-    "axios": "^1.12.0",
+    "axios": "^1.13.5",
     "clsx": "^2.1.1",
     "lucide-react": "^0.534.0",
     "react": "^19.1.0",
@@ -86,7 +86,10 @@
     "overrides": {
       "glob": "^10.5.0",
       "systeminformation": ">=5.27.14",
-      "qs": ">=6.14.1"
+      "qs": "^6.14.3",
+      "lodash": "^4.17.23",
+      "markdown-it": "^14.1.1",
+      "ajv": "^8.18.0"
     }
   },
   "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39"
