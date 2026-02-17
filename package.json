@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "prebuild": "node scripts/generate-sitemap.js",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --max-warnings 0",
     "preview": "vite preview",
     "tailwind:init": "tailwindcss init -p",
     "type-check": "tsc --noEmit",
