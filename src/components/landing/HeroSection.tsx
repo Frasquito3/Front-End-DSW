@@ -8,6 +8,7 @@ const RobotModel = lazy(() => import('./RobotModel.tsx'))
 export default function HeroSection() {
 
   const { data: studentCount, isLoading } = useStudentCount()
+  const isCypress = typeof window !== 'undefined' && (window as any).Cypress
 
   return (
     <section className="pb-8 px-4 pt-28 md:pt-32">
@@ -49,9 +50,12 @@ export default function HeroSection() {
             </div>
           </div>
 
-          <Suspense fallback={<div className="relative w-full h-[280px] sm:h-[350px] lg:h-[500px]" />}>
-            <RobotModel />
-          </Suspense>
+          {!isCypress && (
+            <Suspense fallback={<div className="relative w-full h-[280px] sm:h-[350px] lg:h-[500px]" />}>
+              <RobotModel />
+            </Suspense>
+          )}
+          {isCypress && <div className="relative w-full h-[280px] sm:h-[350px] lg:h-[500px]" />}
         </div>
       </div>
     </section>

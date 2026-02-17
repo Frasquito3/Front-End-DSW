@@ -15,3 +15,13 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands'
+
+// Ignore WebGL errors in headless CI environments
+Cypress.on('uncaught:exception', (err) => {
+  // Ignore WebGL context creation errors (Three.js in RobotModel)
+  if (err.message.includes('Error creating WebGL context')) {
+    return false;
+  }
+  // Allow other errors to fail the tests
+  return true;
+});

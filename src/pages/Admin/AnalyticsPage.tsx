@@ -81,7 +81,7 @@ export default function AnalyticsPage() {
       name: 'En Desarrollo',
       value: analytics.courseStats.byStatus['en-desarrollo'],
       color: '#f59e0b',
-    }
+    },
   ];
 
   return (
@@ -308,7 +308,7 @@ export default function AnalyticsPage() {
                     <span className="text-slate-600">Precio Promedio:</span>
                     <span className="font-medium">
                       {formatCurrency(
-                        analytics.courseStats.averagePriceInCents
+                        analytics.courseStats.averagePriceInCents,
                       )}
                     </span>
                   </div>
