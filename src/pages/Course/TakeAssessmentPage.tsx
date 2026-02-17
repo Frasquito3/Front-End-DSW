@@ -48,22 +48,32 @@ export default function TakeAssessmentPage() {
   const saveAnswersMutation = useSaveAnswers();
   const submitAttemptMutation = useSubmitAttempt();
 
+  // Use a ref to always have the latest answers without triggering re-renders or recreating callbacks
+  const latestAnswersRef = useRef(answers);
+  useEffect(() => {
+    latestAnswersRef.current = answers;
+  }, [answers]);
+
   const handleSubmit = useCallback(
     async (forceSubmit = false) => {
       if (!attemptId) return;
 
-      // Stop the timer immediately
-      setTimeLeft(null);
+      // Stop the timer immediately and prevent dual submissions
+      if (hasAutoSubmittedRef.current && !forceSubmit) return;
       hasAutoSubmittedRef.current = true;
+      setTimeLeft(null);
 
-      if (!forceSubmit && Object.keys(answers).length === 0) {
+      const currentAnswers = latestAnswersRef.current;
+
+      if (!forceSubmit && Object.keys(currentAnswers).length === 0) {
+        hasAutoSubmittedRef.current = false; // Allow trying again if it wasn't a forced submit
         alert(
           'Debes responder al menos una pregunta para enviar la evaluación.',
         );
         return;
       }
 
-      const answersArray = Object.entries(answers).map(
+      const answersArray = Object.entries(currentAnswers).map(
         ([questionId, answer]) => ({
           questionId,
           answer,
@@ -71,42 +81,38 @@ export default function TakeAssessmentPage() {
       );
 
       try {
-        if (answersArray.length > 0) {
-          await submitAttemptMutation.mutateAsync({
-            attemptId,
-            submitData: { attemptId, answers: answersArray },
-          });
+        // Always call the mutation if it's a forceSubmit or if there are answers
+        await submitAttemptMutation.mutateAsync({
+          attemptId,
+          submitData: { attemptId, answers: answersArray },
+        });
 
-          // Clean up localStorage
-          const storageKey = `assessment_answers_${attemptId}`;
-          localStorage.removeItem(storageKey);
+        // Clean up localStorage
+        const storageKey = `assessment_answers_${attemptId}`;
+        localStorage.removeItem(storageKey);
 
-          navigate(
-            `/courses/${courseId}/assessments/${assessmentId}/results/${attemptId}`,
-          );
-        } else if (forceSubmit) {
-          // Clean up localStorage even on forced submit
-          const storageKey = `assessment_answers_${attemptId}`;
-          localStorage.removeItem(storageKey);
-          
-          toast.error('El tiempo se agotó y no hubo respuestas registradas.');
-          navigate(`/courses/${courseId}/assessments`);
-        }
+        toast.success(forceSubmit ? 'Tiempo agotado. Evaluación enviada.' : 'Evaluación enviada con éxito.');
+
+        navigate(
+          `/courses/${courseId}/assessments/${assessmentId}/results/${attemptId}`,
+          { replace: true }
+        );
       } catch (error) {
         console.error('Error submitting attempt:', error);
+        const storageKey = `assessment_answers_${attemptId}`;
+        localStorage.removeItem(storageKey);
+
         if (forceSubmit) {
-          // Clean up localStorage even on error during forced submit
-          const storageKey = `assessment_answers_${attemptId}`;
-          localStorage.removeItem(storageKey);
-          navigate(`/courses/${courseId}/assessments`);
+          toast.error('El tiempo se agotó.');
+          navigate(`/courses/${courseId}/assessments`, { replace: true });
         } else {
+          hasAutoSubmittedRef.current = false;
           toast.error('Hubo un error al enviar la evaluación.');
         }
       }
     },
     [
       attemptId,
-      answers,
       submitAttemptMutation,
       navigate,
       courseId,
@@ -153,7 +159,7 @@ export default function TakeAssessmentPage() {
           try {
             const parsedAnswers = JSON.parse(storedAnswers);
             Object.assign(savedAnswers, parsedAnswers);
-            
+
             if (!hasShownRecoveryToastRef.current) {
               toast.success('Respuestas recuperadas del almacenamiento local', { duration: 2000 });
               hasShownRecoveryToastRef.current = true;
@@ -236,9 +242,14 @@ export default function TakeAssessmentPage() {
     [],
   );
 
-  // Resume active attempt if one exists or auto-start if continuing
+  const hasAttemptedAutoStartRef = useRef(false);
+
+  // Resume active attempt if one exists OR auto-start IF continuing
   useEffect(() => {
-    if (activeAttempt && !hasStarted) {
+    // Only auto-resume/start if the 'isContinuing' flag is present (from the assessments list)
+    if (!isContinuing) return;
+
+    if (activeAttempt && !hasStarted && activeAttempt.status === 'in_progress') {
       setAttemptId(activeAttempt.id);
       setHasStarted(true);
       hasAutoSubmittedRef.current = false;
@@ -264,11 +275,9 @@ export default function TakeAssessmentPage() {
           try {
             const parsedAnswers = JSON.parse(storedAnswers);
             Object.assign(savedAnswers, parsedAnswers);
-            
+
             if (!hasShownRecoveryToastRef.current) {
-              toast.success('Respuestas recuperadas del almacenamiento local', {
-                duration: 2000,
-              });
+              toast.success('Respuestas recuperadas');
               hasShownRecoveryToastRef.current = true;
             }
           } catch (e) {
@@ -300,15 +309,40 @@ export default function TakeAssessmentPage() {
         }
       }
     } else if (
-      isContinuing &&
       !isCheckingAttempt &&
       !activeAttempt &&
-      !hasStarted
+      !hasStarted &&
+      !hasAttemptedAutoStartRef.current
     ) {
-      // User clicked "Continue" but no active attempt exists, start a new one automatically
+      hasAttemptedAutoStartRef.current = true;
       handleStartAttempt();
     }
   }, [activeAttempt, hasStarted, isContinuing, isCheckingAttempt, handleStartAttempt, handleSubmit]);
+
+  // If there's an active attempt but we are on the info page (not hasStarted), 
+  // we can use it directly when the user clicks the button
+  const handleEnterAssessment = useCallback(() => {
+    if (activeAttempt && activeAttempt.status === 'in_progress') {
+      setAttemptId(activeAttempt.id);
+      setHasStarted(true);
+      hasAutoSubmittedRef.current = false;
+      if (activeAttempt.assessment?.questions) {
+        setAttemptQuestions(activeAttempt.assessment.questions);
+      }
+
+      // Time sync
+      if (activeAttempt.assessment?.durationMinutes && activeAttempt.startedAt) {
+        const startedAt = new Date(activeAttempt.startedAt).getTime();
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - startedAt) / 1000);
+        const totalSeconds = activeAttempt.assessment.durationMinutes * 60;
+        const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
+        setTimeLeft(remainingSeconds);
+      }
+    } else {
+      handleStartAttempt();
+    }
+  }, [activeAttempt, handleStartAttempt]);
 
   // Save answers to localStorage immediately when they change (backup)
   useEffect(() => {
@@ -498,14 +532,16 @@ export default function TakeAssessmentPage() {
                 Cancelar
               </Button>
               <Button
-                onClick={handleStartAttempt}
+                onClick={handleEnterAssessment}
                 disabled={startAttemptMutation.isPending}
                 className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
                 {startAttemptMutation.isPending
                   ? 'Iniciando...'
-                  : 'Iniciar Evaluación'}
+                  : activeAttempt?.status === 'in_progress'
+                    ? 'Reanudar Evaluación'
+                    : 'Iniciar Evaluación'}
               </Button>
             </div>
           </CardContent>
@@ -533,11 +569,10 @@ export default function TakeAssessmentPage() {
             <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
               {timeLeft !== null && (
                 <div
-                  className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-mono text-base sm:text-lg font-bold flex-1 justify-center ${
-                    timeLeft < 300
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-purple-100 text-purple-700'
-                  }`}
+                  className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-mono text-base sm:text-lg font-bold flex-1 justify-center ${timeLeft < 300
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-purple-100 text-purple-700'
+                    }`}
                 >
                   <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
                   {formatTime(timeLeft)}

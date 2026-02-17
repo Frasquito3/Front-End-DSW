@@ -128,6 +128,9 @@ export const useStartAttempt = () => {
         queryKey: ['assessment-attempts', variables.assessmentId],
       });
       queryClient.invalidateQueries({
+        queryKey: ['active-attempt', variables.assessmentId],
+      });
+      queryClient.invalidateQueries({
         queryKey: ['pending-assessments'],
       });
       queryClient.invalidateQueries({
@@ -192,6 +195,9 @@ export const useSubmitAttempt = () => {
         queryKey: ['attempt', attempt.id],
       });
       queryClient.invalidateQueries({
+        queryKey: ['active-attempt', assessmentId],
+      });
+      queryClient.invalidateQueries({
         queryKey: ['pending-assessments'],
       });
       queryClient.invalidateQueries({
@@ -238,9 +244,9 @@ export const useAssessmentStatistics = (assessmentId: string | undefined) => {
  * Hook para profesores: Obtener todos los intentos de una evaluación
  */
 export const useAllAttemptsForProfessor = (assessmentId: string | undefined) => {
-    return useQuery<AssessmentAttempt[], Error>({
-        queryKey: ['all-attempts', assessmentId],
-        queryFn: () => assessmentService.getAllAttemptsForProfessor(assessmentId!),
-        enabled: !!assessmentId,
-    });
+  return useQuery<AssessmentAttempt[], Error>({
+    queryKey: ['all-attempts', assessmentId],
+    queryFn: () => assessmentService.getAllAttemptsForProfessor(assessmentId!),
+    enabled: !!assessmentId,
+  });
 };
