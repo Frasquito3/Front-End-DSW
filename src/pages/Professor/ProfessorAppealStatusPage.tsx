@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useMyAppeals } from '../../hooks/useAppeals';
 import { Card } from '../../components/ui/Card/Card';
 import StatusBadge from '../../components/ui/StatusBadge/StatusBadge';
@@ -11,7 +11,6 @@ import {
 } from '../../components/ui/Dialog/Dialog';
 import DocumentViewer from '../../components/ui/DocumentViewer/DocumentViewer';
 import {
-  ArrowLeft,
   Calendar,
   Eye,
   GraduationCap,
@@ -25,7 +24,7 @@ export default function ProfessorAppealStatusPage() {
   const { data: appeals, isLoading } = useMyAppeals();
   const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null);
   const [documentUrlToShow, setDocumentUrlToShow] = useState<string | null>(
-    null
+    null,
   );
   const navigate = useNavigate();
 
@@ -42,26 +41,16 @@ export default function ProfessorAppealStatusPage() {
 
   const sortedAppeals =
     appeals?.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     ) || [];
 
   const hasPendingAppeal = appeals?.some(
-    (appeal) => appeal.state === 'pending'
+    (appeal) => appeal.state === 'pending',
   );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-12 px-4">
-      <div className="container mx-auto max-w-7xl space-y-6">
-        <div className="flex items-center justify-between">
-          <Link
-            to="/"
-            className="inline-flex items-center text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver al inicio
-          </Link>
-        </div>
-
+      <div className="container mx-auto max-w-7xl space-y-6 mt-8">
         {hasPendingAppeal && (
           <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex gap-3 items-start">
             <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
