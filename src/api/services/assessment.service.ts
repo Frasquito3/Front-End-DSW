@@ -56,7 +56,20 @@ const startAttempt = async (
 ): Promise<StartAttemptResponse> => {
   const response = await apiClient.post<ApiResponse<StartAttemptResponse>>(
     `/assessments/${assessmentId}/attempts`,
-    { studentId } // <-- Lo envía en el body
+    { studentId }
+  );
+  return response.data.data;
+};
+
+/**
+ * Endpoint: Obtener intento activo (si existe)
+ * GET /api/assessments/:assessmentId/active-attempt
+ */
+const getActiveAttempt = async (
+  assessmentId: string
+): Promise<StartAttemptResponse | null> => {
+  const response = await apiClient.get<ApiResponse<StartAttemptResponse | null>>(
+    `/assessments/${assessmentId}/active-attempt`
   );
   return response.data.data;
 };
@@ -192,6 +205,7 @@ const assessmentService = {
   getAssessmentsByCourse,
   getById,
   startAttempt,
+  getActiveAttempt,
   saveAnswers,
   submitAttempt,
   getAttemptById,

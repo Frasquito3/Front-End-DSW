@@ -81,7 +81,7 @@ export default function AnalyticsPage() {
       name: 'En Desarrollo',
       value: analytics.courseStats.byStatus['en-desarrollo'],
       color: '#f59e0b',
-    }
+    },
   ];
 
   return (
@@ -276,7 +276,6 @@ export default function AnalyticsPage() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     label={(entry: any) =>
                       `${entry.name}: ${(entry.percent * 100).toFixed(0)}%`
                     }
@@ -309,7 +308,7 @@ export default function AnalyticsPage() {
                     <span className="text-slate-600">Precio Promedio:</span>
                     <span className="font-medium">
                       {formatCurrency(
-                        analytics.courseStats.averagePriceInCents
+                        analytics.courseStats.averagePriceInCents,
                       )}
                     </span>
                   </div>

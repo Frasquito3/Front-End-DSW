@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ArrowLeft, Clock, AlertCircle, CheckCircle, Send } from 'lucide-react';
 import Button from '../../components/ui/Button/Button';
@@ -13,6 +13,7 @@ import {
   useStartAttempt,
   useSaveAnswers,
   useSubmitAttempt,
+  useActiveAttempt,
 } from '../../hooks/useAssessments';
 import { useAuth } from '../../hooks/useAuth';
 import type { QuestionForStudent } from '../../types/entities';
@@ -25,7 +26,9 @@ export default function TakeAssessmentPage() {
     assessmentId: string;
   }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+  const isContinuing = location.state?.isContinuing || false;
 
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, number | string>>({});
@@ -36,68 +39,92 @@ export default function TakeAssessmentPage() {
   >([]);
 
   const hasAutoSubmittedRef = useRef(false);
+  const hasShownRecoveryToastRef = useRef(false);
 
   const { data: assessment, isLoading } = useAssessment(assessmentId);
+  const { data: activeAttempt, isLoading: isCheckingAttempt } =
+    useActiveAttempt(assessmentId);
   const startAttemptMutation = useStartAttempt();
   const saveAnswersMutation = useSaveAnswers();
   const submitAttemptMutation = useSubmitAttempt();
+
+  // Use a ref to always have the latest answers without triggering re-renders or recreating callbacks
+  const latestAnswersRef = useRef(answers);
+  useEffect(() => {
+    latestAnswersRef.current = answers;
+  }, [answers]);
 
   const handleSubmit = useCallback(
     async (forceSubmit = false) => {
       if (!attemptId) return;
 
-      if (!forceSubmit && Object.keys(answers).length === 0) {
+      // Stop the timer immediately and prevent dual submissions
+      if (hasAutoSubmittedRef.current && !forceSubmit) return;
+      hasAutoSubmittedRef.current = true;
+      setTimeLeft(null);
+
+      const currentAnswers = latestAnswersRef.current;
+
+      if (!forceSubmit && Object.keys(currentAnswers).length === 0) {
+        hasAutoSubmittedRef.current = false; // Allow trying again if it wasn't a forced submit
         alert(
-          'Debes responder al menos una pregunta para enviar la evaluación.'
+          'Debes responder al menos una pregunta para enviar la evaluación.',
         );
         return;
       }
 
-      const answersArray = Object.entries(answers).map(
+      const answersArray = Object.entries(currentAnswers).map(
         ([questionId, answer]) => ({
           questionId,
           answer,
-        })
+        }),
       );
 
       try {
-        if (answersArray.length > 0) {
-          await submitAttemptMutation.mutateAsync({
-            attemptId,
-            submitData: { attemptId, answers: answersArray },
-          });
+        // Always call the mutation if it's a forceSubmit or if there are answers
+        await submitAttemptMutation.mutateAsync({
+          attemptId,
+          submitData: { attemptId, answers: answersArray },
+        });
 
-          navigate(
-            `/courses/${courseId}/assessments/${assessmentId}/results/${attemptId}`
-          );
-        } else if (forceSubmit) {
-          toast.error('El tiempo se agotó y no hubo respuestas registradas.');
-          navigate(`/courses/${courseId}/assessments`);
-        }
+        // Clean up localStorage
+        const storageKey = `assessment_answers_${attemptId}`;
+        localStorage.removeItem(storageKey);
+
+        toast.success(forceSubmit ? 'Tiempo agotado. Evaluación enviada.' : 'Evaluación enviada con éxito.');
+
+        navigate(
+          `/courses/${courseId}/assessments/${assessmentId}/results/${attemptId}`,
+          { replace: true }
+        );
       } catch (error) {
         console.error('Error submitting attempt:', error);
+        const storageKey = `assessment_answers_${attemptId}`;
+        localStorage.removeItem(storageKey);
+
         if (forceSubmit) {
-          navigate(`/courses/${courseId}/assessments`);
+          toast.error('El tiempo se agotó.');
+          navigate(`/courses/${courseId}/assessments`, { replace: true });
         } else {
+          hasAutoSubmittedRef.current = false;
           toast.error('Hubo un error al enviar la evaluación.');
         }
       }
     },
     [
       attemptId,
-      answers,
       submitAttemptMutation,
       navigate,
       courseId,
       assessmentId,
-    ]
+    ],
   );
 
-  const handleStartAttempt = async () => {
+  const handleStartAttempt = useCallback(async () => {
     const studentId = user?.studentProfile?.id;
     if (!studentId || !assessmentId) {
       toast.error(
-        'No se pudo iniciar el intento: falta información del estudiante o de la evaluación.'
+        'No se pudo iniciar el intento: falta información del estudiante o de la evaluación.',
       );
       return;
     }
@@ -115,14 +142,52 @@ export default function TakeAssessmentPage() {
         setAttemptQuestions(attempt.assessment.questions);
       }
 
+      // Load answers from server or localStorage
+      const savedAnswers: Record<string, number | string> = {};
+
       if (attempt.answers && attempt.answers.length > 0) {
-        const savedAnswers: Record<string, number | string> = {};
         attempt.answers.forEach((answer) => {
           if (answer.question?.id) {
             savedAnswers[answer.question.id] = answer.answer;
           }
         });
+      } else {
+        // Try to recover from localStorage if server has no answers (resumed attempt)
+        const storageKey = `assessment_answers_${attempt.id}`;
+        const storedAnswers = localStorage.getItem(storageKey);
+        if (storedAnswers) {
+          try {
+            const parsedAnswers = JSON.parse(storedAnswers);
+            Object.assign(savedAnswers, parsedAnswers);
+
+            if (!hasShownRecoveryToastRef.current) {
+              toast.success('Respuestas recuperadas del almacenamiento local', { duration: 2000 });
+              hasShownRecoveryToastRef.current = true;
+            }
+          } catch (e) {
+            console.error('Error parsing stored answers:', e);
+          }
+        }
+      }
+
+      if (Object.keys(savedAnswers).length > 0) {
         setAnswers(savedAnswers);
+      }
+
+      // Calculate remaining time from server
+      if (attempt.assessment?.durationMinutes && attempt.startedAt) {
+        const startedAt = new Date(attempt.startedAt).getTime();
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - startedAt) / 1000);
+        const totalSeconds = attempt.assessment.durationMinutes * 60;
+        const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
+
+        setTimeLeft(remainingSeconds);
+
+        if (remainingSeconds === 0) {
+          hasAutoSubmittedRef.current = true;
+          handleSubmit(true);
+        }
       }
     } catch (error) {
       console.error('Error starting attempt:', error);
@@ -139,7 +204,7 @@ export default function TakeAssessmentPage() {
             'El tiempo para realizar esta evaluación ha finalizado.',
             {
               duration: 5000,
-            }
+            },
           );
 
           navigate(`/courses/${courseId}/assessments`);
@@ -154,24 +219,163 @@ export default function TakeAssessmentPage() {
 
       toast.error('No se pudo iniciar la evaluación. Inténtalo de nuevo.');
     }
-  };
+  }, [
+    user?.studentProfile?.id,
+    assessmentId,
+    startAttemptMutation,
+    handleSubmit,
+    navigate,
+    courseId,
+  ]);
 
-  const handleAnswerChange = (questionId: string, answer: number | string) => {
-    const finalAnswer =
-      typeof answer === 'string' && !isNaN(parseInt(answer, 10))
-        ? parseInt(answer, 10)
-        : answer;
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: finalAnswer,
-    }));
-  };
+  const handleAnswerChange = useCallback(
+    (questionId: string, answer: number | string) => {
+      const finalAnswer =
+        typeof answer === 'string' && !isNaN(parseInt(answer, 10))
+          ? parseInt(answer, 10)
+          : answer;
+      setAnswers((prev) => ({
+        ...prev,
+        [questionId]: finalAnswer,
+      }));
+    },
+    [],
+  );
 
+  const hasAttemptedAutoStartRef = useRef(false);
+
+  // Resume active attempt if one exists OR auto-start IF continuing
   useEffect(() => {
-    if (hasStarted && assessment?.durationMinutes && timeLeft === null) {
-      setTimeLeft(assessment.durationMinutes * 60);
+    // Only auto-resume/start if the 'isContinuing' flag is present (from the assessments list)
+    if (!isContinuing) return;
+
+    if (activeAttempt && !hasStarted && activeAttempt.status === 'in_progress') {
+      setAttemptId(activeAttempt.id);
+      setHasStarted(true);
+      hasAutoSubmittedRef.current = false;
+
+      if (activeAttempt.assessment?.questions) {
+        setAttemptQuestions(activeAttempt.assessment.questions);
+      }
+
+      // Load answers from server or localStorage
+      const savedAnswers: Record<string, number | string> = {};
+
+      if (activeAttempt.answers && activeAttempt.answers.length > 0) {
+        activeAttempt.answers.forEach((answer) => {
+          if (answer.question?.id) {
+            savedAnswers[answer.question.id] = answer.answer;
+          }
+        });
+      } else {
+        // Try to recover from localStorage if server has no answers
+        const storageKey = `assessment_answers_${activeAttempt.id}`;
+        const storedAnswers = localStorage.getItem(storageKey);
+        if (storedAnswers) {
+          try {
+            const parsedAnswers = JSON.parse(storedAnswers);
+            Object.assign(savedAnswers, parsedAnswers);
+
+            if (!hasShownRecoveryToastRef.current) {
+              toast.success('Respuestas recuperadas');
+              hasShownRecoveryToastRef.current = true;
+            }
+          } catch (e) {
+            console.error('Error parsing stored answers:', e);
+          }
+        }
+      }
+
+      if (Object.keys(savedAnswers).length > 0) {
+        setAnswers(savedAnswers);
+      }
+
+      // Calculate remaining time from server
+      if (
+        activeAttempt.assessment?.durationMinutes &&
+        activeAttempt.startedAt
+      ) {
+        const startedAt = new Date(activeAttempt.startedAt).getTime();
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - startedAt) / 1000);
+        const totalSeconds = activeAttempt.assessment.durationMinutes * 60;
+        const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
+
+        setTimeLeft(remainingSeconds);
+
+        if (remainingSeconds === 0) {
+          hasAutoSubmittedRef.current = true;
+          handleSubmit(true);
+        }
+      }
+    } else if (
+      !isCheckingAttempt &&
+      !activeAttempt &&
+      !hasStarted &&
+      !hasAttemptedAutoStartRef.current
+    ) {
+      hasAttemptedAutoStartRef.current = true;
+      handleStartAttempt();
     }
-  }, [hasStarted, assessment, timeLeft]);
+  }, [activeAttempt, hasStarted, isContinuing, isCheckingAttempt, handleStartAttempt, handleSubmit]);
+
+  // If there's an active attempt but we are on the info page (not hasStarted), 
+  // we can use it directly when the user clicks the button
+  const handleEnterAssessment = useCallback(() => {
+    if (activeAttempt && activeAttempt.status === 'in_progress') {
+      setAttemptId(activeAttempt.id);
+      setHasStarted(true);
+      hasAutoSubmittedRef.current = false;
+      if (activeAttempt.assessment?.questions) {
+        setAttemptQuestions(activeAttempt.assessment.questions);
+      }
+
+      // Time sync
+      if (activeAttempt.assessment?.durationMinutes && activeAttempt.startedAt) {
+        const startedAt = new Date(activeAttempt.startedAt).getTime();
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - startedAt) / 1000);
+        const totalSeconds = activeAttempt.assessment.durationMinutes * 60;
+        const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
+        setTimeLeft(remainingSeconds);
+      }
+    } else {
+      handleStartAttempt();
+    }
+  }, [activeAttempt, handleStartAttempt]);
+
+  // Save answers to localStorage immediately when they change (backup)
+  useEffect(() => {
+    if (attemptId && hasStarted && Object.keys(answers).length > 0) {
+      const storageKey = `assessment_answers_${attemptId}`;
+      localStorage.setItem(storageKey, JSON.stringify(answers));
+    }
+  }, [answers, attemptId, hasStarted]);
+
+  // Debounced auto-save to backend when answers change
+  useEffect(() => {
+    if (
+      hasStarted &&
+      attemptId &&
+      Object.keys(answers).length > 0 &&
+      !hasAutoSubmittedRef.current
+    ) {
+      const debouncedSave = setTimeout(() => {
+        const answersArray = Object.entries(answers).map(
+          ([questionId, answer]) => ({
+            questionId,
+            answer,
+          }),
+        );
+        saveAnswersMutation.mutate({
+          attemptId,
+          answers: answersArray,
+        });
+      }, 3000); // Save 3 seconds after the last answer change
+
+      return () => clearTimeout(debouncedSave);
+    }
+  }, [answers, attemptId, hasStarted, saveAnswersMutation]);
 
   useEffect(() => {
     if (hasAutoSubmittedRef.current) return;
@@ -205,7 +409,7 @@ export default function TakeAssessmentPage() {
           ([questionId, answer]) => ({
             questionId,
             answer,
-          })
+          }),
         );
         saveAnswersMutation.mutate({
           attemptId,
@@ -222,12 +426,16 @@ export default function TakeAssessmentPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (isLoading) {
+  if (isLoading || isCheckingAttempt) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-purple-50 to-slate-50 pt-16">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-slate-700 font-medium">Cargando evaluación...</p>
+          <p className="text-slate-700 font-medium">
+            {isCheckingAttempt
+              ? 'Verificando intentos activos...'
+              : 'Cargando evaluación...'}
+          </p>
         </div>
       </div>
     );
@@ -324,14 +532,16 @@ export default function TakeAssessmentPage() {
                 Cancelar
               </Button>
               <Button
-                onClick={handleStartAttempt}
+                onClick={handleEnterAssessment}
                 disabled={startAttemptMutation.isPending}
                 className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
                 {startAttemptMutation.isPending
                   ? 'Iniciando...'
-                  : 'Iniciar Evaluación'}
+                  : activeAttempt?.status === 'in_progress'
+                    ? 'Reanudar Evaluación'
+                    : 'Iniciar Evaluación'}
               </Button>
             </div>
           </CardContent>
@@ -359,11 +569,10 @@ export default function TakeAssessmentPage() {
             <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
               {timeLeft !== null && (
                 <div
-                  className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-mono text-base sm:text-lg font-bold flex-1 justify-center ${
-                    timeLeft < 300
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-purple-100 text-purple-700'
-                  }`}
+                  className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg font-mono text-base sm:text-lg font-bold flex-1 justify-center ${timeLeft < 300
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-purple-100 text-purple-700'
+                    }`}
                 >
                   <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
                   {formatTime(timeLeft)}
@@ -424,7 +633,7 @@ export default function TakeAssessmentPage() {
                             onChange={(e) =>
                               handleAnswerChange(
                                 question.id!,
-                                parseInt(e.target.value, 10)
+                                parseInt(e.target.value, 10),
                               )
                             }
                             disabled={hasAutoSubmittedRef.current}

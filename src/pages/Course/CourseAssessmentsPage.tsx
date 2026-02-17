@@ -108,7 +108,12 @@ export default function CourseAssessmentsPage() {
                   if (enrollment) {
                     navigate(
                       `/courses/${courseId}/assessments/${assessment.id}/take`,
-                      { state: { enrollmentId: enrollment.id } }
+                      {
+                        state: {
+                          enrollmentId: enrollment.id,
+                          isContinuing: assessment.hasActiveAttempt
+                        }
+                      }
                     );
                   }
                 }}
@@ -210,8 +215,10 @@ function AssessmentCard({
   };
 
   const canTakeAssessment =
+    assessment.hasActiveAttempt ||
     assessment.status === 'available' ||
-    (assessment.attemptsRemaining && assessment.attemptsRemaining > 0);
+    (assessment.status === 'completed' &&
+      (!assessment.maxAttempts || (assessment.attemptsRemaining && assessment.attemptsRemaining > 0)));
 
   return (
     <Card className="hover:shadow-xl transition-all duration-300 overflow-hidden">
@@ -280,11 +287,10 @@ function AssessmentCard({
                   Mejor calificación
                 </span>
                 <span
-                  className={`text-sm font-bold ${
-                    assessment.bestScore >= assessment.passingScore
-                      ? 'text-green-700'
-                      : 'text-amber-700'
-                  }`}
+                  className={`text-sm font-bold ${assessment.bestScore >= assessment.passingScore
+                    ? 'text-green-700'
+                    : 'text-amber-700'
+                    }`}
                 >
                   {assessment.bestScore}%
                 </span>
@@ -309,9 +315,11 @@ function AssessmentCard({
                 className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
                 size="sm"
               >
-                {assessment.attemptsCount > 0
-                  ? 'Reintentar'
-                  : 'Iniciar Evaluación'}
+                {assessment.hasActiveAttempt
+                  ? 'Continuar Intento'
+                  : assessment.attemptsCount > 0
+                    ? 'Reintentar'
+                    : 'Iniciar Evaluación'}
               </Button>
               {assessment.attemptsCount > 0 && (
                 <Button

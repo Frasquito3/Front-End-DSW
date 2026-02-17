@@ -128,12 +128,30 @@ export const useStartAttempt = () => {
         queryKey: ['assessment-attempts', variables.assessmentId],
       });
       queryClient.invalidateQueries({
+        queryKey: ['active-attempt', variables.assessmentId],
+      });
+      queryClient.invalidateQueries({
         queryKey: ['pending-assessments'],
       });
       queryClient.invalidateQueries({
         queryKey: ['assessments', 'course'],
       });
     },
+  });
+};
+
+/**
+ * Hook to check for an active attempt
+ */
+export const useActiveAttempt = (assessmentId: string | undefined) => {
+  return useQuery<StartAttemptResponse | null, Error>({
+    queryKey: ['active-attempt', assessmentId],
+    queryFn: () =>
+      assessmentId
+        ? assessmentService.getActiveAttempt(assessmentId)
+        : Promise.resolve(null),
+    enabled: !!assessmentId,
+    retry: false,
   });
 };
 
@@ -175,6 +193,9 @@ export const useSubmitAttempt = () => {
       });
       queryClient.invalidateQueries({
         queryKey: ['attempt', attempt.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['active-attempt', assessmentId],
       });
       queryClient.invalidateQueries({
         queryKey: ['pending-assessments'],
@@ -223,9 +244,9 @@ export const useAssessmentStatistics = (assessmentId: string | undefined) => {
  * Hook para profesores: Obtener todos los intentos de una evaluación
  */
 export const useAllAttemptsForProfessor = (assessmentId: string | undefined) => {
-    return useQuery<AssessmentAttempt[], Error>({
-        queryKey: ['all-attempts', assessmentId],
-        queryFn: () => assessmentService.getAllAttemptsForProfessor(assessmentId!),
-        enabled: !!assessmentId,
-    });
+  return useQuery<AssessmentAttempt[], Error>({
+    queryKey: ['all-attempts', assessmentId],
+    queryFn: () => assessmentService.getAllAttemptsForProfessor(assessmentId!),
+    enabled: !!assessmentId,
+  });
 };
