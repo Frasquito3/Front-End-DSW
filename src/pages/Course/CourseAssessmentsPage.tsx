@@ -108,7 +108,12 @@ export default function CourseAssessmentsPage() {
                   if (enrollment) {
                     navigate(
                       `/courses/${courseId}/assessments/${assessment.id}/take`,
-                      { state: { enrollmentId: enrollment.id } }
+                      { 
+                        state: { 
+                          enrollmentId: enrollment.id,
+                          isContinuing: assessment.hasActiveAttempt 
+                        } 
+                      }
                     );
                   }
                 }}
@@ -309,7 +314,9 @@ function AssessmentCard({
                 className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
                 size="sm"
               >
-                {assessment.attemptsCount > 0
+                {assessment.hasActiveAttempt
+                  ? 'Continuar Intento'
+                  : assessment.attemptsCount > 0
                   ? 'Reintentar'
                   : 'Iniciar Evaluación'}
               </Button>

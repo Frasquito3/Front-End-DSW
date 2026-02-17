@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ArrowLeft, Clock, AlertCircle, CheckCircle, Send } from 'lucide-react';
 import Button from '../../components/ui/Button/Button';
@@ -13,6 +13,7 @@ import {
   useStartAttempt,
   useSaveAnswers,
   useSubmitAttempt,
+  useActiveAttempt,
 } from '../../hooks/useAssessments';
 import { useAuth } from '../../hooks/useAuth';
 import type { QuestionForStudent } from '../../types/entities';
@@ -25,7 +26,9 @@ export default function TakeAssessmentPage() {
     assessmentId: string;
   }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+  const isContinuing = location.state?.isContinuing || false;
 
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, number | string>>({});
@@ -36,8 +39,11 @@ export default function TakeAssessmentPage() {
   >([]);
 
   const hasAutoSubmittedRef = useRef(false);
+  const hasShownRecoveryToastRef = useRef(false);
 
   const { data: assessment, isLoading } = useAssessment(assessmentId);
+  const { data: activeAttempt, isLoading: isCheckingAttempt } =
+    useActiveAttempt(assessmentId);
   const startAttemptMutation = useStartAttempt();
   const saveAnswersMutation = useSaveAnswers();
   const submitAttemptMutation = useSubmitAttempt();
@@ -46,9 +52,13 @@ export default function TakeAssessmentPage() {
     async (forceSubmit = false) => {
       if (!attemptId) return;
 
+      // Stop the timer immediately
+      setTimeLeft(null);
+      hasAutoSubmittedRef.current = true;
+
       if (!forceSubmit && Object.keys(answers).length === 0) {
         alert(
-          'Debes responder al menos una pregunta para enviar la evaluación.'
+          'Debes responder al menos una pregunta para enviar la evaluación.',
         );
         return;
       }
@@ -57,7 +67,7 @@ export default function TakeAssessmentPage() {
         ([questionId, answer]) => ({
           questionId,
           answer,
-        })
+        }),
       );
 
       try {
@@ -67,16 +77,27 @@ export default function TakeAssessmentPage() {
             submitData: { attemptId, answers: answersArray },
           });
 
+          // Clean up localStorage
+          const storageKey = `assessment_answers_${attemptId}`;
+          localStorage.removeItem(storageKey);
+
           navigate(
-            `/courses/${courseId}/assessments/${assessmentId}/results/${attemptId}`
+            `/courses/${courseId}/assessments/${assessmentId}/results/${attemptId}`,
           );
         } else if (forceSubmit) {
+          // Clean up localStorage even on forced submit
+          const storageKey = `assessment_answers_${attemptId}`;
+          localStorage.removeItem(storageKey);
+          
           toast.error('El tiempo se agotó y no hubo respuestas registradas.');
           navigate(`/courses/${courseId}/assessments`);
         }
       } catch (error) {
         console.error('Error submitting attempt:', error);
         if (forceSubmit) {
+          // Clean up localStorage even on error during forced submit
+          const storageKey = `assessment_answers_${attemptId}`;
+          localStorage.removeItem(storageKey);
           navigate(`/courses/${courseId}/assessments`);
         } else {
           toast.error('Hubo un error al enviar la evaluación.');
@@ -90,14 +111,14 @@ export default function TakeAssessmentPage() {
       navigate,
       courseId,
       assessmentId,
-    ]
+    ],
   );
 
-  const handleStartAttempt = async () => {
+  const handleStartAttempt = useCallback(async () => {
     const studentId = user?.studentProfile?.id;
     if (!studentId || !assessmentId) {
       toast.error(
-        'No se pudo iniciar el intento: falta información del estudiante o de la evaluación.'
+        'No se pudo iniciar el intento: falta información del estudiante o de la evaluación.',
       );
       return;
     }
@@ -115,14 +136,52 @@ export default function TakeAssessmentPage() {
         setAttemptQuestions(attempt.assessment.questions);
       }
 
+      // Load answers from server or localStorage
+      const savedAnswers: Record<string, number | string> = {};
+
       if (attempt.answers && attempt.answers.length > 0) {
-        const savedAnswers: Record<string, number | string> = {};
         attempt.answers.forEach((answer) => {
           if (answer.question?.id) {
             savedAnswers[answer.question.id] = answer.answer;
           }
         });
+      } else {
+        // Try to recover from localStorage if server has no answers (resumed attempt)
+        const storageKey = `assessment_answers_${attempt.id}`;
+        const storedAnswers = localStorage.getItem(storageKey);
+        if (storedAnswers) {
+          try {
+            const parsedAnswers = JSON.parse(storedAnswers);
+            Object.assign(savedAnswers, parsedAnswers);
+            
+            if (!hasShownRecoveryToastRef.current) {
+              toast.success('Respuestas recuperadas del almacenamiento local', { duration: 2000 });
+              hasShownRecoveryToastRef.current = true;
+            }
+          } catch (e) {
+            console.error('Error parsing stored answers:', e);
+          }
+        }
+      }
+
+      if (Object.keys(savedAnswers).length > 0) {
         setAnswers(savedAnswers);
+      }
+
+      // Calculate remaining time from server
+      if (attempt.assessment?.durationMinutes && attempt.startedAt) {
+        const startedAt = new Date(attempt.startedAt).getTime();
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - startedAt) / 1000);
+        const totalSeconds = attempt.assessment.durationMinutes * 60;
+        const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
+
+        setTimeLeft(remainingSeconds);
+
+        if (remainingSeconds === 0) {
+          hasAutoSubmittedRef.current = true;
+          handleSubmit(true);
+        }
       }
     } catch (error) {
       console.error('Error starting attempt:', error);
@@ -139,7 +198,7 @@ export default function TakeAssessmentPage() {
             'El tiempo para realizar esta evaluación ha finalizado.',
             {
               duration: 5000,
-            }
+            },
           );
 
           navigate(`/courses/${courseId}/assessments`);
@@ -154,24 +213,135 @@ export default function TakeAssessmentPage() {
 
       toast.error('No se pudo iniciar la evaluación. Inténtalo de nuevo.');
     }
-  };
+  }, [
+    user?.studentProfile?.id,
+    assessmentId,
+    startAttemptMutation,
+    handleSubmit,
+    navigate,
+    courseId,
+  ]);
 
-  const handleAnswerChange = (questionId: string, answer: number | string) => {
-    const finalAnswer =
-      typeof answer === 'string' && !isNaN(parseInt(answer, 10))
-        ? parseInt(answer, 10)
-        : answer;
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: finalAnswer,
-    }));
-  };
+  const handleAnswerChange = useCallback(
+    (questionId: string, answer: number | string) => {
+      const finalAnswer =
+        typeof answer === 'string' && !isNaN(parseInt(answer, 10))
+          ? parseInt(answer, 10)
+          : answer;
+      setAnswers((prev) => ({
+        ...prev,
+        [questionId]: finalAnswer,
+      }));
+    },
+    [],
+  );
 
+  // Resume active attempt if one exists or auto-start if continuing
   useEffect(() => {
-    if (hasStarted && assessment?.durationMinutes && timeLeft === null) {
-      setTimeLeft(assessment.durationMinutes * 60);
+    if (activeAttempt && !hasStarted) {
+      setAttemptId(activeAttempt.id);
+      setHasStarted(true);
+      hasAutoSubmittedRef.current = false;
+
+      if (activeAttempt.assessment?.questions) {
+        setAttemptQuestions(activeAttempt.assessment.questions);
+      }
+
+      // Load answers from server or localStorage
+      const savedAnswers: Record<string, number | string> = {};
+
+      if (activeAttempt.answers && activeAttempt.answers.length > 0) {
+        activeAttempt.answers.forEach((answer) => {
+          if (answer.question?.id) {
+            savedAnswers[answer.question.id] = answer.answer;
+          }
+        });
+      } else {
+        // Try to recover from localStorage if server has no answers
+        const storageKey = `assessment_answers_${activeAttempt.id}`;
+        const storedAnswers = localStorage.getItem(storageKey);
+        if (storedAnswers) {
+          try {
+            const parsedAnswers = JSON.parse(storedAnswers);
+            Object.assign(savedAnswers, parsedAnswers);
+            
+            if (!hasShownRecoveryToastRef.current) {
+              toast.success('Respuestas recuperadas del almacenamiento local', {
+                duration: 2000,
+              });
+              hasShownRecoveryToastRef.current = true;
+            }
+          } catch (e) {
+            console.error('Error parsing stored answers:', e);
+          }
+        }
+      }
+
+      if (Object.keys(savedAnswers).length > 0) {
+        setAnswers(savedAnswers);
+      }
+
+      // Calculate remaining time from server
+      if (
+        activeAttempt.assessment?.durationMinutes &&
+        activeAttempt.startedAt
+      ) {
+        const startedAt = new Date(activeAttempt.startedAt).getTime();
+        const now = Date.now();
+        const elapsedSeconds = Math.floor((now - startedAt) / 1000);
+        const totalSeconds = activeAttempt.assessment.durationMinutes * 60;
+        const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
+
+        setTimeLeft(remainingSeconds);
+
+        if (remainingSeconds === 0) {
+          hasAutoSubmittedRef.current = true;
+          handleSubmit(true);
+        }
+      }
+    } else if (
+      isContinuing &&
+      !isCheckingAttempt &&
+      !activeAttempt &&
+      !hasStarted
+    ) {
+      // User clicked "Continue" but no active attempt exists, start a new one automatically
+      handleStartAttempt();
     }
-  }, [hasStarted, assessment, timeLeft]);
+  }, [activeAttempt, hasStarted, isContinuing, isCheckingAttempt, handleStartAttempt, handleSubmit]);
+
+  // Save answers to localStorage immediately when they change (backup)
+  useEffect(() => {
+    if (attemptId && hasStarted && Object.keys(answers).length > 0) {
+      const storageKey = `assessment_answers_${attemptId}`;
+      localStorage.setItem(storageKey, JSON.stringify(answers));
+    }
+  }, [answers, attemptId, hasStarted]);
+
+  // Debounced auto-save to backend when answers change
+  useEffect(() => {
+    if (
+      hasStarted &&
+      attemptId &&
+      Object.keys(answers).length > 0 &&
+      !hasAutoSubmittedRef.current
+    ) {
+      const debouncedSave = setTimeout(() => {
+        const answersArray = Object.entries(answers).map(
+          ([questionId, answer]) => ({
+            questionId,
+            answer,
+          }),
+        );
+        saveAnswersMutation.mutate({
+          attemptId,
+          answers: answersArray,
+        });
+      }, 3000); // Save 3 seconds after the last answer change
+
+      return () => clearTimeout(debouncedSave);
+    }
+  }, [answers, attemptId, hasStarted, saveAnswersMutation]);
 
   useEffect(() => {
     if (hasAutoSubmittedRef.current) return;
@@ -205,7 +375,7 @@ export default function TakeAssessmentPage() {
           ([questionId, answer]) => ({
             questionId,
             answer,
-          })
+          }),
         );
         saveAnswersMutation.mutate({
           attemptId,
@@ -222,12 +392,16 @@ export default function TakeAssessmentPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (isLoading) {
+  if (isLoading || isCheckingAttempt) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-purple-50 to-slate-50 pt-16">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-slate-700 font-medium">Cargando evaluación...</p>
+          <p className="text-slate-700 font-medium">
+            {isCheckingAttempt
+              ? 'Verificando intentos activos...'
+              : 'Cargando evaluación...'}
+          </p>
         </div>
       </div>
     );
@@ -424,7 +598,7 @@ export default function TakeAssessmentPage() {
                             onChange={(e) =>
                               handleAnswerChange(
                                 question.id!,
-                                parseInt(e.target.value, 10)
+                                parseInt(e.target.value, 10),
                               )
                             }
                             disabled={hasAutoSubmittedRef.current}

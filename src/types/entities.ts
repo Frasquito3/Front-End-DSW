@@ -361,6 +361,7 @@ export interface AssessmentSummary {
   bestScore?: number;
   lastAttemptDate?: string;
   status: AssessmentStatus;
+  hasActiveAttempt: boolean;
 }
 
 export interface AssessmentWithMetadata extends Assessment {

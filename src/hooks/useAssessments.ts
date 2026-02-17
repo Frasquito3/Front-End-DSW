@@ -138,6 +138,21 @@ export const useStartAttempt = () => {
 };
 
 /**
+ * Hook to check for an active attempt
+ */
+export const useActiveAttempt = (assessmentId: string | undefined) => {
+  return useQuery<StartAttemptResponse | null, Error>({
+    queryKey: ['active-attempt', assessmentId],
+    queryFn: () =>
+      assessmentId
+        ? assessmentService.getActiveAttempt(assessmentId)
+        : Promise.resolve(null),
+    enabled: !!assessmentId,
+    retry: false,
+  });
+};
+
+/**
  * Endpoint #4: Guardar respuestas (auto-save)
  */
 export const useSaveAnswers = () => {
